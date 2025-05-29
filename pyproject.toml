@@ -1,0 +1,37 @@
+[project]
+name = "demo-githubmcp"
+version = "0.1.0"
+description = "GitHub MCP Demo with LangGraph + Azure GPT-4o + Langfuse"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langchain>=0.3.25",
+    "langchain-core>=0.3.62",
+    "langchain-openai>=0.3.18",
+    "langfuse>=2.60.7",
+    "langgraph>=0.4.7",
+    "pydantic>=2.11.5",
+    "python-dotenv>=1.1.0",
+    "mcp>=1.1.2",
+    "requests>=2.32.3",
+]
+
+[dependency-groups]
+test = [
+    "pytest>=8.3.5",
+    "pytest-asyncio>=1.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["-v", "--tb=short", "--strict-markers", "--strict-config"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests"
+]
