@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-service
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    command: >
+      sh -c "ollama serve & sleep 5 && ollama pull llama3.2 && tail -f /dev/null"
+
+volumes:
+  ollama_data:
+    name: ollama_data

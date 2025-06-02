@@ -3,12 +3,7 @@
 GitHub MCP Client tests
 """
 import asyncio
-import sys
-from pathlib import Path
 import pytest
-
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from src.tools.mcp_client.github_client import GitHubMCPClient
 
@@ -17,6 +12,8 @@ class TestMCPClient:
     """Test MCP client functionality"""
     
     @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.mcp
     async def test_client_connection(self):
         """Test MCP client can connect to server"""
         client = GitHubMCPClient()
@@ -28,6 +25,8 @@ class TestMCPClient:
             pytest.fail(f"Failed to connect to MCP client: {e}")
     
     @pytest.mark.asyncio
+    @pytest.mark.integration
+    @pytest.mark.mcp
     async def test_client_tools_discovery(self):
         """Test client can discover available tools"""
         client = GitHubMCPClient()

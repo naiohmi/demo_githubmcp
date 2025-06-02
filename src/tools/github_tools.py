@@ -1,12 +1,11 @@
 """
 LangGraph tools for GitHub MCP integration
 """
-import asyncio
-from typing import Any, Dict, List, Optional, Type
+import json
+from typing import List, Optional, Type
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
-
-from src.tools.mcp_client.github_client import GitHubMCPClient, GitHubMCPClientManager
+from src.tools.mcp_client.github_client import GitHubMCPClient, create_github_client
 
 
 class GitHubSpecificTool(BaseTool):
@@ -23,11 +22,11 @@ class GitHubSpecificTool(BaseTool):
         
     async def _get_client(self) -> GitHubMCPClient:
         """Get or create MCP client"""
-        from src.tools.mcp_client.github_client import create_github_client
         return await create_github_client()
         
     def _run(self, **kwargs) -> str:
         """Synchronous wrapper"""
+        import asyncio  # Import here as it's only used in this method
         return asyncio.run(self._arun(**kwargs))
         
     async def _arun(self, *args, **kwargs) -> str:
@@ -46,13 +45,11 @@ class GitHubSpecificTool(BaseTool):
             result = await client.call_tool(self._tool_name, kwargs)
             
             if isinstance(result, dict):
-                import json
                 return json.dumps(result, indent=2)
             return str(result)
             
         except Exception as e:
             return f"Error calling GitHub tool '{self._tool_name}': {str(e)}"
-
 
 # Specific tool schemas
 class ListBranchesInput(BaseModel):
@@ -501,6 +498,7 @@ def get_github_tools() -> List[BaseTool]:
         # Repository browsing
         ListBranchesTool(),
         GetFileContentsTool(),
+        GetRepositoryTool(),  # Added
         
         # Search tools
         SearchRepositoriesTool(),
@@ -516,6 +514,8 @@ def get_github_tools() -> List[BaseTool]:
         ListPullRequestsTool(),
         GetPullRequestTool(),
         GetPullRequestFilesTool(),
+        GetPullRequestCommentsTool(),
+        GetPullRequestDiffTool(),
         
         # Issue tools
         ListIssuesTool(),
@@ -523,9 +523,7 @@ def get_github_tools() -> List[BaseTool]:
         CreateIssueTool(),
         UpdateIssueTool(),
         
-        # Additional working tools
-        GetPullRequestCommentsTool(),
-        GetPullRequestDiffTool(),
+        # Tag tools
         ListTagsTool(),
         GetTagTool(),
     ]

@@ -1,7 +1,6 @@
 """
 GitHub MCP Client for interacting with GitHub MCP Server
 """
-import asyncio
 import json
 import os
 import subprocess

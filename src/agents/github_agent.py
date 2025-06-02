@@ -1,133 +1,59 @@
 """
-GitHub Agent using LangGraph with Azure GPT-4o and Langfuse
+GitHub Agent using LangGraph with Dynamic LLM Provider Support and Langfuse
 """
 import asyncio
-from typing import Dict, List, Any, Optional
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from langchain_core.tools import BaseTool
-from langchain_openai import AzureChatOpenAI
-from langgraph.graph import StateGraph, END
-from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode
-from typing_extensions import Annotated, TypedDict
-from langfuse.callback import CallbackHandler
+import uuid
+from langchain_core.messages import HumanMessage, AIMessage
 
-from src.config.settings import get_settings
 from src.tools.github_tools import get_github_tools
-
-
-class AgentState(TypedDict):
-    """State for the agent"""
-    messages: Annotated[List[AIMessage | HumanMessage | SystemMessage], add_messages]
+from src.utils.nodes import create_llm_with_tools
+from src.utils.graph import create_agent_graph
 
 
 class GitHubAgent:
-    """GitHub Agent using LangGraph, Azure GPT-4o, and Langfuse"""
+    """GitHub Agent using LangGraph with Dynamic LLM Provider Support and Langfuse.
     
-    def __init__(self):
-        self.settings = get_settings()
+    This class provides a simplified interface for the GitHub agent,
+    using the modular components for LLM creation and graph workflow.
+    Supports multiple LLM providers (Azure OpenAI, Ollama) via provider:model format.
+    """
+    
+    def __init__(self, user_id: str, session_id: str, trace_id: str, llm_model_name: str):
+        """Initialize the GitHub agent with LLM and workflow graph.
+        
+        Args:
+            user_id: User identifier for Langfuse tracking
+            session_id: Session identifier for Langfuse tracking
+            trace_id: Trace identifier for Langfuse tracking
+            llm_model_name: LLM model name in format "provider:model" (e.g., "azure:gpt-4o", "ollama:llama2")
+        """
+        self.user_id = user_id
+        self.session_id = session_id
+        self.trace_id = trace_id
+        self.llm_model_name = llm_model_name
         self.tools = get_github_tools()
-        self.llm = self._create_llm()
-        self.tool_node = ToolNode(self.tools)
-        self.graph = self._create_graph()
-        
-    def _create_llm(self) -> AzureChatOpenAI:
-        """Create Azure GPT-4o LLM with Langfuse callback"""
-        langfuse_handler = CallbackHandler(
-            secret_key=self.settings.LANGFUSE_SECRET_KEY,
-            public_key=self.settings.LANGFUSE_PUBLIC_KEY,
-            host=self.settings.LANGFUSE_HOST
-        )
-        
-        llm = AzureChatOpenAI(
-            azure_endpoint=self.settings.AZURE_OPENAI_ENDPOINT,
-            api_key=self.settings.AZURE_OPENAI_API_KEY,
-            api_version=self.settings.AZURE_OPENAI_API_VERSION,
-            deployment_name=self.settings.MODEL_NAME,
-            model=self.settings.MODEL_NAME,
-            temperature=0.1,
-            streaming=False,
-            callbacks=[langfuse_handler]
-        )
-        
-        # Bind tools to the LLM
-        llm_with_tools = llm.bind_tools(tools=self.tools)
-        return llm_with_tools
-        
-    def _create_graph(self) -> StateGraph:
-        """Create the LangGraph workflow"""
-        
-        def should_continue(state: AgentState) -> str:
-            """Decide whether to continue or end the conversation"""
-            messages = state["messages"]
-            last_message = messages[-1]
-            
-            # If the last message has tool calls, go to tools
-            if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
-                return "tools"
-            # Otherwise, end the conversation
-            return END
-        
-        def call_model(state: AgentState) -> Dict[str, Any]:
-            """Call the LLM"""
-            messages = state["messages"]
-            
-            # Add system message if not present
-            if not messages or not isinstance(messages[0], SystemMessage):
-                system_message = SystemMessage(content="""
-You are a helpful GitHub assistant that can interact with GitHub repositories using various tools.
-
-You have access to GitHub MCP tools that allow you to:
-- List and explore repository branches
-- Get repository information and metadata  
-- List and analyze pull requests
-- Get detailed pull request information including files changed
-- List repository commits and get commit details
-- Get file contents from repositories
-- Search for repositories and issues
-- Get issue details and comments
-- And many other GitHub operations
-
-When a user asks about GitHub repositories, branches, pull requests, issues, or any GitHub-related information:
-1. Use the appropriate GitHub tools to gather the information
-2. Provide clear, helpful responses based on the data retrieved
-3. If you need specific repository information (owner/repo), ask the user for clarification
-4. Format your responses in a readable way, highlighting key information
-
-Always be helpful and provide actionable insights when possible.
-                """)
-                messages = [system_message] + messages
-            
-            response = self.llm.invoke(messages)
-            return {"messages": [response]}
-        
-        # Create the graph
-        workflow = StateGraph(AgentState)
-        
-        # Add nodes
-        workflow.add_node("agent", call_model)
-        workflow.add_node("tools", self.tool_node)
-        
-        # Set entry point
-        workflow.set_entry_point("agent")
-        
-        # Add edges
-        workflow.add_conditional_edges(
-            "agent",
-            should_continue,
-            {
-                "tools": "tools",
-                END: END
-            }
-        )
-        
-        # Tools always go back to agent
-        workflow.add_edge("tools", "agent")
-        
-        return workflow.compile()
     
-    async def ainvoke(self, message: str, **kwargs) -> str:
-        """Invoke the agent asynchronously"""
+    async def ainvoke(self, message: str, message_id: str, **kwargs) -> str:
+        """Invoke the agent asynchronously.
+        
+        Args:
+            message: User message to process
+            message_id: Unique identifier for this message
+            **kwargs: Additional arguments for graph invocation
+            
+        Returns:
+            Agent response as string
+        """
+        # Create LLM with current message context using registry
+        self.llm = create_llm_with_tools(
+            llm_model_name=self.llm_model_name,
+            tools=self.tools,
+            user_id=self.user_id,
+            session_id=self.session_id,
+            trace_id=self.trace_id,
+            message_id=message_id
+        )
+        self.graph = create_agent_graph(self.llm, self.tools)
         try:
             # Create initial state
             initial_state = {
@@ -149,36 +75,81 @@ Always be helpful and provide actionable insights when possible.
         except Exception as e:
             return f"Error processing request: {str(e)}"
     
-    def invoke(self, message: str, **kwargs) -> str:
-        """Invoke the agent synchronously"""
-        return asyncio.run(self.ainvoke(message, **kwargs))
+    def invoke(self, message: str, message_id: str, **kwargs) -> str:
+        """Invoke the agent synchronously.
+        
+        Args:
+            message: User message to process
+            message_id: Unique identifier for this message
+            **kwargs: Additional arguments for graph invocation
+            
+        Returns:
+            Agent response as string
+        """
+        return asyncio.run(self.ainvoke(message, message_id, **kwargs))
 
 
-async def create_github_agent() -> GitHubAgent:
-    """Factory function to create a GitHub agent"""
-    return GitHubAgent()
-
-
-# Example usage functions
-async def example_queries():
-    """Example queries to test the agent"""
-    agent = await create_github_agent()
+async def create_github_agent(user_id: str, session_id: str, trace_id: str, llm_model_name: str) -> GitHubAgent:
+    """Factory function to create a GitHub agent.
     
-    # Example queries
-    queries = [
-        "what branches are available in the repository microsoft/vscode?",
-        "what is the current version of the repository openai/openai-python?",
-        "can you summarize and show me the latest PR changes in the repository microsoft/TypeScript?"
-    ]
+    Args:
+        user_id: User identifier for Langfuse tracking
+        session_id: Session identifier for Langfuse tracking
+        trace_id: Trace identifier for Langfuse tracking
+        llm_model_name: LLM model name in format "provider:model" (e.g., "azure:gpt-4o", "ollama:llama2")
+        
+    Returns:
+        Configured GitHubAgent instance
+    """
+    return GitHubAgent(user_id, session_id, trace_id, llm_model_name)
+
+async def interactive_mode(user_id: str, session_id: str, trace_id: str, llm_model_name: str):
+    """Interactive mode for asking GitHub questions.
     
-    for query in queries:
-        print(f"\n🤖 Query: {query}")
-        print("─" * 50)
-        response = await agent.ainvoke(query)
-        print(f"📝 Response: {response}")
-        print("═" * 80)
-
-
-if __name__ == "__main__":
-    # Run example queries
-    asyncio.run(example_queries())
+    Provides a command-line interface for interacting with the GitHub agent.
+    Users can ask questions about repositories, issues, users, and more.
+    
+    Args:
+        user_id: User identifier for Langfuse tracking
+        session_id: Session identifier for Langfuse tracking
+        trace_id: Trace identifier for Langfuse tracking
+        llm_model_name: LLM model name in format "provider:model" (e.g., "azure:gpt-4o", "ollama:llama2")
+    """
+    print("\n💬 Interactive GitHub Assistant")
+    print("=" * 50)
+    print("Ask me anything about GitHub repositories!")
+    print("\nExample questions:")
+    print("• 'What branches are available in [owner/repo]?'")
+    print("• 'What repositories does [username] have?'")
+    print("• 'Show me the README file from [owner/repo]'")
+    print("• 'What is the latest commit in [owner/repo]?'")
+    print("• 'Search for repositories about [topic]'")
+    print("• 'Find issues in [owner/repo] with label [label]'")
+    print("\nReplace [owner/repo] with actual repository names")
+    print("Type 'quit' to exit\n")
+    
+    agent = await create_github_agent(user_id, session_id, trace_id, llm_model_name)
+    
+    while True:
+        try:
+            question = input("🔍 Your question: ").strip()
+            
+            if question.lower() in ['quit', 'exit', 'q']:
+                break
+                
+            if not question:
+                continue
+                
+            # Generate unique message ID for this interaction
+            message_id = str(uuid.uuid4())
+            print(f"\n🤔 Thinking... (Message ID: {message_id[:8]}...)")
+            response = await agent.ainvoke(question, message_id)
+            print(f"\n🤖 Answer: {response}\n")
+            print("-" * 60)
+            
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print(f"❌ Error: {str(e)}\n")
+    
+    print("Goodbye! 👋")

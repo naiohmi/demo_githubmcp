@@ -1,10 +1,16 @@
 """
-GitHub service for handling high-level GitHub operations
+High-level GitHub service using the agent for operations
 """
-import asyncio
-from typing import Dict, List, Any, Optional
+import uuid
+from typing import Optional
 from src.agents.github_agent import GitHubAgent, create_github_agent
-from src.tools.mcp_client.github_client import GitHubMCPClientManager
+from src.utils.session_context import get_session_context
+from src.config.parameters import (
+    DEFAULT_PR_LIMIT,
+    DEFAULT_COMMIT_LIMIT,
+    DEFAULT_BRANCH
+)
+from src.utils.prompt_loader import get_prompt_loader
 
 
 class GitHubService:
@@ -16,37 +22,51 @@ class GitHubService:
     async def _get_agent(self) -> GitHubAgent:
         """Get or create the GitHub agent"""
         if self.agent is None:
-            self.agent = await create_github_agent()
+            # Use shared session parameters from main.py for consistent tracing
+            session_context = get_session_context()
+            user_id, session_id, trace_id, llm_model_name = session_context.get_session_parameters()
+            
+            # Use service-specific user_id but keep same session/trace for consistency
+            service_user_id = "service_user"
+            self.agent = await create_github_agent(service_user_id, session_id, trace_id, llm_model_name)
         return self.agent
     
     async def ask_question(self, question: str) -> str:
         """Ask a question about GitHub repositories"""
         agent = await self._get_agent()
-        return await agent.ainvoke(question)
+        message_id = str(uuid.uuid4())
+        return await agent.ainvoke(question, message_id)
     
     async def get_repository_branches(self, owner: str, repo: str) -> str:
         """Get branches for a specific repository"""
-        question = f"What branches are available in the repository {owner}/{repo}?"
+        prompt_loader = get_prompt_loader()
+        question = prompt_loader.get_query_template("branches").format(owner=owner, repo=repo)
         return await self.ask_question(question)
     
     async def get_repository_info(self, owner: str, repo: str) -> str:
         """Get information about a repository"""
-        question = f"Can you tell me about the repository {owner}/{repo}? Include version, description, and recent activity."
+        prompt_loader = get_prompt_loader()
+        question = prompt_loader.get_query_template("repository_info").format(owner=owner, repo=repo)
         return await self.ask_question(question)
     
     async def get_latest_pull_requests(self, owner: str, repo: str, limit: int = 5) -> str:
         """Get latest pull requests for a repository"""
-        question = f"Can you show me the latest {limit} pull requests in {owner}/{repo}? Include titles, authors, and status."
+        limit = limit or DEFAULT_PR_LIMIT
+        prompt_loader = get_prompt_loader()
+        question = prompt_loader.get_query_template("pull_requests").format(owner=owner, repo=repo, limit=limit)
         return await self.ask_question(question)
     
     async def summarize_pull_request(self, owner: str, repo: str, pr_number: int) -> str:
         """Get detailed summary of a specific pull request"""
-        question = f"Can you summarize pull request #{pr_number} in {owner}/{repo}? Include what files were changed, the description, and review status."
+        prompt_loader = get_prompt_loader()
+        question = prompt_loader.get_query_template("pull_request_summary").format(owner=owner, repo=repo, pr_number=pr_number)
         return await self.ask_question(question)
     
     async def get_recent_commits(self, owner: str, repo: str, limit: int = 10) -> str:
         """Get recent commits for a repository"""
-        question = f"Can you show me the latest {limit} commits in {owner}/{repo}? Include commit messages and authors."
+        limit = limit or DEFAULT_COMMIT_LIMIT
+        prompt_loader = get_prompt_loader()
+        question = prompt_loader.get_query_template("commits").format(owner=owner, repo=repo, limit=limit)
         return await self.ask_question(question)
     
     async def get_latest_commits(self, owner: str, repo: str, limit: int = 10) -> str:
@@ -55,13 +75,25 @@ class GitHubService:
     
     async def search_repositories(self, query: str, limit: int = 10) -> str:
         """Search for repositories"""
-        question = f"Can you search for repositories related to '{query}' and show me the top {limit} results?"
+        limit = limit or DEFAULT_PR_LIMIT
+        prompt_loader = get_prompt_loader()
+        question = prompt_loader.get_query_template("search_repos").format(query=query, limit=limit)
         return await self.ask_question(question)
     
     async def get_file_content(self, owner: str, repo: str, file_path: str, ref: str = "main") -> str:
         """Get content of a specific file"""
-        question = f"Can you get the content of the file '{file_path}' from {owner}/{repo} on the {ref} branch?"
+        ref = ref or DEFAULT_BRANCH
+        prompt_loader = get_prompt_loader()
+        question = prompt_loader.get_query_template("file_content").format(owner=owner, repo=repo, file_path=file_path, ref=ref)
         return await self.ask_question(question)
+    
+    async def get_user_info(self) -> str:
+        """Get information about the authenticated user"""
+        return await self.ask_question("Who am I on GitHub?")
+    
+    async def list_repositories(self, username: str) -> str:
+        """List repositories for a specific user"""
+        return await self.ask_question(f"What repositories does {username} have?")
 
 
 # Singleton instance
@@ -74,36 +106,3 @@ async def get_github_service() -> GitHubService:
     if _github_service is None:
         _github_service = GitHubService()
     return _github_service
-
-
-# Example usage
-async def demo_github_operations():
-    """Demonstrate various GitHub operations"""
-    service = await get_github_service()
-    
-    print("🚀 GitHub Service Demo")
-    print("=" * 50)
-    
-    # Example 1: Get repository branches
-    print("\n1. Getting repository branches...")
-    branches_result = await service.get_repository_branches("microsoft", "vscode")
-    print(f"Branches: {branches_result}")
-    
-    # Example 2: Get repository info
-    print("\n2. Getting repository information...")
-    repo_info = await service.get_repository_info("openai", "openai-python")
-    print(f"Repository Info: {repo_info}")
-    
-    # Example 3: Get latest pull requests
-    print("\n3. Getting latest pull requests...")
-    prs_result = await service.get_latest_pull_requests("microsoft", "TypeScript", 3)
-    print(f"Pull Requests: {prs_result}")
-    
-    # Example 4: Search repositories
-    print("\n4. Searching repositories...")
-    search_result = await service.search_repositories("machine learning python", 5)
-    print(f"Search Results: {search_result}")
-
-
-if __name__ == "__main__":
-    asyncio.run(demo_github_operations())

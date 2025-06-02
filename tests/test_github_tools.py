@@ -3,12 +3,7 @@
 GitHub Tools tests
 """
 import asyncio
-import sys
-from pathlib import Path
 import pytest
-
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from src.tools.github_tools import get_github_tools
 
@@ -16,12 +11,16 @@ from src.tools.github_tools import get_github_tools
 class TestGitHubTools:
     """Test GitHub tool implementations"""
     
+    @pytest.mark.unit
+    @pytest.mark.mcp
     def test_tools_loading(self):
         """Test that GitHub tools can be loaded"""
         tools = get_github_tools()
         assert len(tools) > 0, "No GitHub tools loaded"
-        assert len(tools) == 20, f"Expected 20 tools, got {len(tools)}"
+        assert len(tools) == 21, f"Expected 21 tools, got {len(tools)}"
         
+    @pytest.mark.unit
+    @pytest.mark.mcp
     def test_tool_names(self):
         """Test that all expected tools are present"""
         tools = get_github_tools()
@@ -41,6 +40,8 @@ class TestGitHubTools:
             assert expected_tool in tool_names, f"Expected tool '{expected_tool}' not found"
     
     @pytest.mark.asyncio
+    @pytest.mark.api
+    @pytest.mark.mcp
     async def test_get_me_tool(self):
         """Test get_me tool functionality"""
         tools = get_github_tools()
@@ -55,6 +56,8 @@ class TestGitHubTools:
             pytest.fail(f"get_me tool failed: {e}")
     
     @pytest.mark.asyncio
+    @pytest.mark.api
+    @pytest.mark.mcp
     async def test_search_repositories_tool(self):
         """Test search_repositories tool functionality"""
         tools = get_github_tools()

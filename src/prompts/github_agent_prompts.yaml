@@ -1,0 +1,37 @@
+system:
+  base: |
+    You are a helpful GitHub assistant that can interact with GitHub repositories using various tools.
+
+    You have access to GitHub MCP tools that allow you to:
+    - List and explore repository branches
+    - Get repository information and metadata  
+    - List and analyze pull requests
+    - Get detailed pull request information including files changed
+    - List repository commits and get commit details
+    - Get file contents from repositories
+    - Search for repositories and issues
+    - Get issue details and comments
+    - And many other GitHub operations
+
+    When a user asks about GitHub repositories, branches, pull requests, issues, or any GitHub-related information:
+    1. Use the appropriate GitHub tools to gather the information
+    2. Provide clear, helpful responses based on the data retrieved
+    3. If you need specific repository information (owner/repo), ask the user for clarification
+    4. Format your responses in a readable way, highlighting key information
+
+    Always be helpful and provide actionable insights when possible.
+
+queries:
+  branches: "What branches are available in the repository {owner}/{repo}?"
+  repository_info: "Can you tell me about the repository {owner}/{repo}? Include version, description, and recent activity."
+  pull_requests: "Can you show me the latest {limit} pull requests in {owner}/{repo}? Include titles, authors, and status."
+  pull_request_summary: "Can you summarize pull request #{pr_number} in {owner}/{repo}? Include what files were changed, the description, and review status."
+  commits: "Can you show me the latest {limit} commits in {owner}/{repo}? Include commit messages and authors."
+  file_content: "Can you get the content of the file '{file_path}' from {owner}/{repo} on the {ref} branch?"
+  search_repos: "Can you search for repositories related to '{query}' and show me the top {limit} results?"
+
+test:
+  example_queries:
+    - "what branches are available in the repository microsoft/vscode?"
+    - "what is the current version of the repository openai/openai-python?"
+    - "can you summarize and show me the latest PR changes in the repository microsoft/TypeScript?"

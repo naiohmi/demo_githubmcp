@@ -1,5 +1,5 @@
 """
-GitHub MCP Agent with LangGraph, Azure GPT-4o, and Langfuse
+GitHub MCP Agent with LangGraph, Multi-Provider LLM Support, and Langfuse
 
 Interactive GitHub assistant that can help you with:
 - Repository information and management
@@ -8,129 +8,49 @@ Interactive GitHub assistant that can help you with:
 - User and organization queries
 - Commit history and branch information
 
+Supports multiple LLM providers:
+- Azure OpenAI: azure:gpt-4o, azure:gpt-4, azure:gpt-35-turbo
+- Ollama: ollama:llama2, ollama:llama3, ollama:mistral
+
 Usage: python main.py
 """
 import asyncio
-import os
-from src.config.settings import get_settings
-from src.services.github_service import get_github_service
-from src.agents.github_agent import create_github_agent
-
-
-async def check_environment():
-    """Check if required environment variables are set"""
-    settings = get_settings()
-    
-    missing_vars = []
-    
-    if not settings.AZURE_OPENAI_API_KEY:
-        missing_vars.append("AZURE_OPENAI_API_KEY")
-    if not settings.AZURE_OPENAI_ENDPOINT:
-        missing_vars.append("AZURE_OPENAI_ENDPOINT")
-    if not settings.GITHUB_PERSONAL_ACCESS_TOKEN:
-        missing_vars.append("GITHUB_PERSONAL_ACCESS_TOKEN")
-    if not settings.LANGFUSE_SECRET_KEY:
-        missing_vars.append("LANGFUSE_SECRET_KEY")
-    if not settings.LANGFUSE_PUBLIC_KEY:
-        missing_vars.append("LANGFUSE_PUBLIC_KEY")
-    
-    if missing_vars:
-        print("❌ Missing required environment variables:")
-        for var in missing_vars:
-            print(f"  - {var}")
-        print("\nPlease set these variables in your .env file or environment.")
-        return False
-    
-    print("✅ All required environment variables are set!")
-    return True
-
-
-async def demo_agent_capabilities():
-    """Demo the agent's capabilities with example questions"""
-    print("\n🤖 GitHub MCP Agent Capabilities Demo")
-    print("=" * 50)
-    print("This agent can help you with various GitHub operations:")
-    print("• Search repositories, code, issues, and users")
-    print("• Get repository information, branches, and files")
-    print("• Retrieve commits, pull requests, and issues")
-    print("• Create and update issues")
-    print("• Access both public and private repositories (with proper permissions)")
-    print("\nAgent is ready! ✅")
-    print("=" * 50)
-
-
-async def demo_service_capabilities():
-    """Demo the service layer capabilities"""
-    print("\n🔧 Service Layer Available")
-    print("=" * 50)
-    print("The GitHub service provides direct access to:")
-    print("• Repository operations (branches, info, search)")
-    print("• File operations (get contents, search code)")
-    print("• Commit operations (list, get specific commits)")
-    print("• Issue operations (list, get, create, update)")
-    print("• Pull request operations (list, get, files, comments)")
-    print("• User operations (search, get profile)")
-    print("\nService layer is ready! ✅")
-    print("=" * 50)
-
-
-async def interactive_mode():
-    """Interactive mode for asking GitHub questions"""
-    print("\n💬 Interactive GitHub Assistant")
-    print("=" * 50)
-    print("Ask me anything about GitHub repositories!")
-    print("\nExample questions:")
-    print("• 'What branches are available in [owner/repo]?'")
-    print("• 'What repositories does [username] have?'")
-    print("• 'Show me the README file from [owner/repo]'")
-    print("• 'What is the latest commit in [owner/repo]?'")
-    print("• 'Search for repositories about [topic]'")
-    print("• 'Find issues in [owner/repo] with label [label]'")
-    print("\nReplace [owner/repo] with actual repository names")
-    print("Type 'quit' to exit\n")
-    
-    agent = await create_github_agent()
-    
-    while True:
-        try:
-            question = input("🔍 Your question: ").strip()
-            
-            if question.lower() in ['quit', 'exit', 'q']:
-                break
-                
-            if not question:
-                continue
-                
-            print("\n🤔 Thinking...")
-            response = await agent.ainvoke(question)
-            print(f"\n🤖 Answer: {response}\n")
-            print("-" * 60)
-            
-        except KeyboardInterrupt:
-            break
-        except Exception as e:
-            print(f"❌ Error: {str(e)}\n")
-    
-    print("Goodbye! 👋")
-
+import uuid
+from src.config.settings import check_environment
+from src.utils.common import interactive_mode
+from src.utils.session_context import set_global_session_parameters
 
 def main():
     """Main entry point"""
-    print("🚀 GitHub MCP Agent with LangGraph + Azure GPT-4o + Langfuse")
-    print("=" * 70)
+    print("🚀 GitHub MCP Agent with LangGraph + Multi-Provider LLM + Langfuse")
+    print("=" * 75)
     
     async def run_application():
         # Check environment
         if not await check_environment():
             return
         
-        # Show capabilities
-        await demo_agent_capabilities()
-        await demo_service_capabilities()
+        # Generate session-level parameters for Langfuse tracking
+        user_id = "demo_user"
+        session_id = str(uuid.uuid4())
+        trace_id = str(uuid.uuid4())
+        llm_model_name = "azure:gpt-4o"  # Use provider:model format, {e.g., "azure:gpt-4o", "ollama:llama3.2"}
         
-        # Start interactive mode
+        # Set global session parameters for use across the application
+        set_global_session_parameters(user_id, session_id, trace_id, llm_model_name)
+        
+        print(f"\n🎯 Available LLM Models:")
+        print(f"  Selected: {llm_model_name}")
+        
+        print(f"\n📊 Session Info:")
+        print(f"   User ID: {user_id}")
+        print(f"   Session ID: {session_id}")
+        print(f"   Trace ID: {trace_id}")
+        print(f"   LLM Model: {llm_model_name}")
+        
+        # Start interactive mode with parameters
         print("\n🎯 Starting Interactive Mode...")
-        await interactive_mode()
+        await interactive_mode(user_id, session_id, trace_id, llm_model_name)
     
     try:
         asyncio.run(run_application())
