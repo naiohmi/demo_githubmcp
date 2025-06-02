@@ -2,6 +2,32 @@
 
 An intelligent GitHub assistant that demonstrates the integration of Model Context Protocol (MCP) servers with LangGraph agents, powered by Azure GPT-4o and enhanced with Langfuse observability.
 
+## 📑 Quick Navigation
+
+- [🚀 Quick Start](#-quick-start) - Get started quickly
+- [🔄 Model Configuration](#-model-configuration) - Switch between LLM models
+- [🔐 Credentials Setup](#obtaining-credentials) - Get required API keys
+- [💬 How to Use](#-how-to-use) - Basic usage guide
+- [🛠️ Available Tools](#️-available-github-tools) - List of GitHub operations
+- [🔍 Troubleshooting](#-troubleshooting) - Common issues and solutions
+
+## 📚 Documentation Map
+
+```mermaid
+graph LR
+    A[README.md] --> B[Quick Start]
+    A --> C[Model Config]
+    A --> D[Usage Guide]
+    
+    E[project_manual.md] --> F[Architecture]
+    E --> G[Development]
+    E --> H[Best Practices]
+    
+    I[github_mcp_manual.md] --> J[Technical Docs]
+    I --> K[API Reference]
+    I --> L[Tutorials]
+```
+
 ## 🌟 Features
 
 - 🤖 **Intelligent GitHub Agent**: Natural language interface for GitHub operations
@@ -213,12 +239,118 @@ This will check:
 python main.py
 ```
 
+## 🔄 Model Configuration
+
+### Available LLM Models
+
+The system supports multiple LLM providers:
+
+1. **Azure OpenAI Models**
+   - `azure:gpt-4o` (Default, most capable)
+   - `azure:gpt-4`
+   - `azure:gpt-35-turbo`
+
+2. **Ollama Models**
+   - `ollama:llama2`
+   - `ollama:llama3`
+   - `ollama:mistral`
+
+### How to Switch Models
+
+1. **In main.py**
+   ```python
+   # Find this line (around line 37):
+   llm_model_name = "azure:gpt-4o"  # Change to your preferred model
+   
+   # Example changes:
+   llm_model_name = "azure:gpt-4"      # Use standard GPT-4
+   llm_model_name = "ollama:llama3"    # Use Ollama's Llama 3
+   ```
+
+2. **Via Environment Variable**
+   ```bash
+   # In your .env file or command line:
+   export LLM_MODEL="azure:gpt-4o"     # For Azure GPT-4
+   # OR
+   export LLM_MODEL="ollama:llama3"    # For Ollama
+   ```
+
+### Obtaining Credentials
+
+#### 1. Azure OpenAI Credentials (For Azure Models)
+
+1. **Create Azure Account**
+   - Go to [Azure Portal](https://portal.azure.com)
+   - Sign up if you don't have an account
+   - Navigate to "Create a resource"
+
+2. **Create Azure OpenAI Resource**
+   ```mermaid
+   graph TD
+       A[Azure Portal] -->|Create resource| B[AI + Machine Learning]
+       B -->|Select| C[Azure OpenAI]
+       C -->|Configure| D[Basic Settings]
+       D -->|Create| E[Resource]
+       E -->|Access| F[Keys and Endpoint]
+   ```
+
+3. **Get Required Values**
+   - Find your resource in Azure Portal
+   - Go to "Keys and Endpoint" section
+   - Copy these values:
+     ```env
+     AZURE_OPENAI_API_KEY=your_key_here
+     AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+     AZURE_OPENAI_API_VERSION=2024-12-01-preview
+     ```
+
+#### 2. GitHub Personal Access Token
+
+1. **Generate Token**
+   - Go to [GitHub Settings → Developer Settings](https://github.com/settings/tokens)
+   - Click "Generate New Token (classic)"
+   - Select these permissions:
+     ```
+     - repo (all)
+     - read:org
+     - read:user
+     - user:email
+     ```
+
+2. **Save Token**
+   ```env
+   GITHUB_PERSONAL_ACCESS_TOKEN=ghp_your_token_here
+   ```
+
+#### 3. Ollama Setup (For Ollama Models)
+
+1. **Install Ollama**
+   ```bash
+   # macOS
+   brew install ollama
+   
+   # Linux
+   curl -fsSL https://ollama.com/install.sh | sh
+   ```
+
+2. **Pull Required Models**
+   ```bash
+   ollama pull llama2    # For llama2
+   ollama pull llama3    # For llama3
+   ollama pull mistral   # For mistral
+   ```
+
+3. **Configure Environment**
+   ```env
+   OLLAMA_BASE_URL=http://localhost:11434  # Default Ollama URL
+   ```
+
 ## 💬 How to Use
 
 Once you run `python main.py`, you'll see:
 
 1. **Environment Check**: Verifies all required environment variables
-2. **Capabilities Overview**: Shows what the agent can do
+2. **Model Configuration**: Shows selected LLM model and session info
 3. **Interactive Mode**: Ask questions in natural language!
 
 ### Example Questions
