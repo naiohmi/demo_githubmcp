@@ -38,21 +38,3 @@ class BaseLLMProvider(ABC):
             Exception: If configuration is invalid or connection fails
         """
         pass
-    
-    @abstractmethod
-    def validate_config(self) -> bool:
-        """Validate provider configuration.
-        
-        Returns:
-            True if configuration is valid, False otherwise
-        """
-        pass
-    
-    @abstractmethod
-    def get_supported_models(self) -> List[str]:
-        """Get list of supported model names for this provider.
-        
-        Returns:
-            List of supported model names
-        """
-        pass

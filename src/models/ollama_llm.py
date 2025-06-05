@@ -74,21 +74,3 @@ class OllamaLLMProvider(BaseLLMProvider):
         # Bind tools to enable function calling
         llm_with_tools = llm.bind_tools(tools=tools)
         return llm_with_tools
-    
-    def validate_config(self) -> bool:
-        """Validate Ollama configuration.
-        
-        Returns:
-            True if Ollama endpoint is configured
-        """
-        return bool(self.settings.OLLAMA_ENDPOINT)
-    
-    def get_supported_models(self) -> List[str]:
-        """Get supported Ollama models.
-        
-        Returns:
-            List of commonly supported Ollama model names
-        """
-        return [
-            "llama3.2",
-        ]

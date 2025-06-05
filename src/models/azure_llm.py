@@ -78,28 +78,3 @@ class AzureLLMProvider(BaseLLMProvider):
         # Bind tools to enable function calling
         llm_with_tools = llm.bind_tools(tools=tools)
         return llm_with_tools
-    
-    def validate_config(self) -> bool:
-        """Validate Azure OpenAI configuration.
-        
-        Returns:
-            True if all required Azure configuration is present
-        """
-        return all([
-            self.settings.AZURE_OPENAI_API_KEY,
-            self.settings.AZURE_OPENAI_ENDPOINT
-        ])
-    
-    def get_supported_models(self) -> List[str]:
-        """Get supported Azure OpenAI models.
-        
-        Returns:
-            List of commonly supported Azure OpenAI model names
-        """
-        return [
-            "gpt-4o",
-            "gpt-4", 
-            "gpt-4-turbo",
-            "gpt-35-turbo",
-            "gpt-35-turbo-16k"
-        ]
