@@ -31,7 +31,7 @@ class GitHubAgent:
         self.session_id = session_id
         self.trace_id = trace_id
         self.llm_model_name = llm_model_name
-        self.tools = get_github_tools()
+        self.tools = None  # Will be loaded asynchronously
     
     async def ainvoke(self, message: str, message_id: str, **kwargs) -> str:
         """Invoke the agent asynchronously.
@@ -44,6 +44,10 @@ class GitHubAgent:
         Returns:
             Agent response as string
         """
+        # Load tools if not already loaded
+        if self.tools is None:
+            self.tools = await get_github_tools()
+        
         # Create LLM with current message context using registry
         self.llm = create_llm_with_tools(
             llm_model_name=self.llm_model_name,

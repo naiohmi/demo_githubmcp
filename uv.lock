@@ -114,6 +114,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "langchain" },
     { name = "langchain-core" },
+    { name = "langchain-mcp-adapters" },
     { name = "langchain-ollama" },
     { name = "langchain-openai" },
     { name = "langfuse" },
@@ -136,6 +137,7 @@ test = [
 requires-dist = [
     { name = "langchain", specifier = ">=0.3.25" },
     { name = "langchain-core", specifier = ">=0.3.62" },
+    { name = "langchain-mcp-adapters", specifier = ">=0.1.4" },
     { name = "langchain-ollama", specifier = ">=0.3.3" },
     { name = "langchain-openai", specifier = ">=0.3.18" },
     { name = "langfuse", specifier = ">=2.60.7" },
@@ -343,6 +345,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fc/db/a894327f8a3dafa88ab929f571d1f0497b16902c78a9d572fd8a73bee676/langchain_core-0.3.62.tar.gz", hash = "sha256:e75e483b0b602a2fdcfbe349be7efb7f1c1c04b20f8d51c7892e78fbecc8a823", size = 558296, upload-time = "2025-05-27T17:07:12.508Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/7f/b25ad5c991f327e42f2cdf5416914bea976778e40726dab3d4e140e77118/langchain_core-0.3.62-py3-none-any.whl", hash = "sha256:242cef42be32baa5c7cd03df719d21093323b5271fff9efbe0ca9a0dfa8ee2bf", size = 438357, upload-time = "2025-05-27T17:07:11.131Z" },
+]
+
+[[package]]
+name = "langchain-mcp-adapters"
+version = "0.1.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "langchain-core" },
+    { name = "mcp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c0/07/5add51f5f8c4dd4f0a9a84ddb8a5e3c5277c664f093c6047c9337418f6e0/langchain_mcp_adapters-0.1.4.tar.gz", hash = "sha256:3eab41e1682b6e6a47b3734232ad3289c7cd97dbae30facf1ad4d47b62a56629", size = 18797, upload-time = "2025-05-29T15:10:32.728Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/b6/8410cf0f9f307d1b96696fc833983b01911cc5004bebf7a13849ebbe37a3/langchain_mcp_adapters-0.1.4-py3-none-any.whl", hash = "sha256:9f36c985284df827062c8e467d0b093cb67f31f14ca216c56aed8e09e3607276", size = 12898, upload-time = "2025-05-29T15:10:31.445Z" },
 ]
 
 [[package]]
