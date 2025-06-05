@@ -22,13 +22,27 @@ Let's break down how our system works in simple terms:
 graph TB
     subgraph "How It Works"
         A[Your Code] --> B[Service Layer<br/>(The Manager)]
-        B --> C[Tools Layer<br/>(The Toolkit)]
-        C --> D[Client Layer<br/>(The Messenger)]
-        D --> E[MCP Server<br/>(The Translator)]
-        E --> F[GitHub API]
+        B --> C[Tools Layer<br/>(Dynamic Discovery)]
+        C --> D[GitHub Client Layer<br/>(Specific Wrapper)]
+        D --> E[Generic MCP Client<br/>(Extensible Base)]
+        E --> F[MCP Server<br/>(The Translator)]
+        F --> G[GitHub API]
     end
 
     style A fill:#d4f1f4
+    style B fill:#89c4f4
+    style C fill:#89f4a3
+    style D fill:#f4cf89
+    style E fill:#cf89f4
+    style F fill:#f49189
+    style G fill:#ddd
+```
+
+**Key Benefits of the New Architecture:**
+- **Generic Base**: The MCP client can now work with any MCP server, not just GitHub
+- **Dynamic Discovery**: Tools are automatically discovered from the server at runtime
+- **Backward Compatibility**: All existing code continues to work unchanged
+- **Extensibility**: Easy to add new MCP servers through JSON configuration
     style B fill:#89c4f4
     style C fill:#89f4a3
     style D fill:#f4cf89
@@ -146,6 +160,37 @@ graph TB
    - Use batch operations when available
 
 ## Core Components
+
+### New Architecture Components
+
+#### 1. Generic MCP Client (`src/tools/mcp_client/mcp_client.py`)
+- **Purpose**: Handles communication with any MCP server
+- **Key Features**: 
+  - Multi-server support via JSON configuration
+  - Dynamic tool discovery
+  - Environment variable mapping
+  - Server-specific operations
+
+#### 2. GitHub Client Wrapper (`src/tools/mcp_client/github_client.py`)
+- **Purpose**: Provides GitHub-specific convenience methods
+- **Key Features**:
+  - Backward compatibility with existing code
+  - GitHub-specific defaults and configurations
+  - Context managers for easy resource management
+
+#### 3. Configuration Registry (`src/registry/mcp_client_config.json`)
+- **Purpose**: Centralized configuration for all MCP servers
+- **Benefits**:
+  - Easy to add new servers without code changes
+  - Environment variable management
+  - Server-specific timeouts and settings
+
+#### 4. Dynamic Tool Discovery (`src/tools/github_tools.py`)
+- **Purpose**: Automatically discovers and converts MCP tools to LangChain tools
+- **Benefits**:
+  - Reduced code maintenance (90% reduction in lines)
+  - Always up-to-date with server capabilities
+  - No manual tool definitions needed
 
 1. **MCP Server**
    - Handles GitHub API communication

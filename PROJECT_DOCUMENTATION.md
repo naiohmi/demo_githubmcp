@@ -42,15 +42,17 @@ This project demonstrates how to build an intelligent GitHub assistant using the
 - Provides 51 GitHub operations via standardized MCP protocol
 - Handles authentication, rate limiting, and API communication
 
-#### 2. **MCP Client** (`src/tools/mcp_client/github_client.py`)
-- Python wrapper for MCP communication
-- Manages server lifecycle and connection pooling
-- Handles tool discovery and invocation
+#### 2. **MCP Client Architecture** (`src/tools/mcp_client/`)
+- **Generic MCP Client** (`mcp_client.py`) - Extensible client supporting multiple MCP servers
+- **GitHub-Specific Client** (`github_client.py`) - Backward-compatible wrapper for GitHub operations
+- **JSON Registry Configuration** (`src/registry/mcp_client_config.json`) - Centralized server configuration
+- Manages server lifecycle, connection pooling, and tool discovery across multiple MCP servers
 
-#### 3. **LangChain Tools** (`src/tools/github_tools.py`)
-- 20 implemented GitHub tools mapped to MCP server capabilities
-- LangChain-compatible interfaces for agent integration
+#### 3. **GitHub Tools** (`src/tools/github_tools.py`)
+- Simplified dynamic tool discovery from MCP server
+- Auto-converts all MCP tools to LangChain-compatible interfaces
 - Comprehensive coverage: repositories, issues, PRs, commits, users
+- Reduced from 500+ lines to ~60 lines through automation
 
 #### 4. **LangGraph Agent** (`src/agents/github_agent.py`)
 - Intelligent workflow orchestration
@@ -136,12 +138,15 @@ demo_githubmcp/
     │   └── github_agent.py        # LangGraph agent implementation
     ├── ⚙️  config/
     │   └── settings.py            # Configuration management
+    ├── 📋 registry/
+    │   └── mcp_client_config.json # MCP server registry configuration
     ├── 🏗️  services/
     │   └── github_service.py      # High-level service operations
     └── 🛠️  tools/
         ├── github_tools.py        # 20 GitHub tool implementations
         └── mcp_client/
-            └── github_client.py   # MCP client wrapper
+            ├── mcp_client.py      # Generic MCP client (extensible)
+            └── github_client.py   # GitHub-specific client wrapper
 ```
 
 ## 💡 Key Design Decisions
@@ -165,6 +170,19 @@ demo_githubmcp/
 ### 5. **Azure OpenAI Integration**
 **Why:** Enterprise-grade AI with reliable performance and compliance
 **Benefit:** Production-ready with proper security and monitoring
+
+### 6. **Generic MCP Client Architecture** 
+**Why:** Separated GitHub-specific functionality from generic MCP client for better extensibility
+**Benefits:** 
+- **Extensibility**: Easy to add new MCP servers via JSON configuration
+- **Maintainability**: Clear separation of concerns between generic and server-specific logic  
+- **Backward Compatibility**: Existing GitHub integrations continue to work unchanged
+- **Multi-Server Support**: Single client can manage multiple MCP servers simultaneously
+
+**Implementation Details:**
+- **JSON Registry** (`src/registry/mcp_client_config.json`): Centralized server configuration
+- **Environment Variable Mapping**: Flexible credential management per server
+- **Inheritance Pattern**: GitHub client extends generic client with specific functionality
 
 ## 🔬 Engineering Challenges Solved
 
@@ -239,10 +257,12 @@ demo_githubmcp/
 ## 📊 Project Metrics
 
 - **✅ 51 MCP Tools Available** - Complete GitHub MCP server integration
-- **✅ 20 Implemented Tools** - Essential GitHub operations covered
+- **✅ Dynamic Tool Discovery** - All tools auto-discovered from MCP server
+- **✅ Generic MCP Architecture** - Extensible for multiple MCP servers
 - **✅ 4 Test Suites** - Comprehensive testing framework
 - **✅ Cross-Platform Support** - macOS and Windows compatibility
 - **✅ Production Ready** - Error handling, configuration, and observability
+- **✅ 90% Code Reduction** - Simplified from 500+ to 60 lines in tools layer
 
 ## 🔮 Future Enhancements
 

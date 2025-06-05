@@ -4,31 +4,34 @@
 1. [Introduction](#introduction)
 2. [Architecture Overview](#architecture-overview)
 3. [Component Documentation](#component-documentation)
-   - [Client Layer](#client-layer)
+   - [Generic MCP Client Layer](#generic-mcp-client-layer)
+   - [GitHub Client Layer](#github-client-layer)
    - [Tools Layer](#tools-layer)
    - [Service Layer](#service-layer)
 
 ## Developer Guide for New Team Members
 
-### Understanding the Architecture
+### Understanding the New Architecture
 
 #### 1. System Components Explained
-The GitHub MCP integration is built in layers, making it easier to understand and maintain:
+The GitHub MCP integration has been refactored into a generic, extensible architecture:
 
 ```mermaid
 graph TD
     A[Your Code] --> B[Service Layer]
-    B --> C[Tools Layer]
-    C --> D[Client Layer]
-    D --> E[MCP Server]
-    E --> F[GitHub API]
+    B --> C[Tools Layer - Dynamic Discovery]
+    C --> D[GitHub Client Layer - Specific Wrapper]
+    D --> E[Generic MCP Client - Extensible]
+    E --> F[MCP Server]
+    F --> G[GitHub API]
     
     style A fill:#d4f1f4
     style B fill:#89c4f4
     style C fill:#89f4a3
     style D fill:#f4cf89
-    style E fill:#f49189
-    style F fill:#ddd
+    style E fill:#cf89f4
+    style F fill:#f49189
+    style G fill:#ddd
 ```
 
 Each layer has a specific responsibility:
