@@ -24,6 +24,14 @@ class OllamaLLMProvider(BaseLLMProvider):
         self.settings = get_settings()
         self.langfuse_service = langfuse_service or get_langfuse_service()
     
+    def validate_config(self) -> bool:
+        """Validate Ollama provider configuration.
+        
+        Returns:
+            True if Ollama configuration is valid, False otherwise
+        """
+        return bool(self.settings.OLLAMA_ENDPOINT)
+    
     def create_llm(
         self,
         model_name: str,

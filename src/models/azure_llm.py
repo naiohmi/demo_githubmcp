@@ -24,6 +24,18 @@ class AzureLLMProvider(BaseLLMProvider):
         self.settings = get_settings()
         self.langfuse_service = langfuse_service or get_langfuse_service()
     
+    def validate_config(self) -> bool:
+        """Validate Azure provider configuration.
+        
+        Returns:
+            True if Azure configuration is valid, False otherwise
+        """
+        return bool(
+            self.settings.AZURE_OPENAI_API_KEY and 
+            self.settings.AZURE_OPENAI_ENDPOINT and
+            self.settings.AZURE_OPENAI_API_VERSION
+        )
+    
     def create_llm(
         self,
         model_name: str,

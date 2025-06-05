@@ -10,6 +10,15 @@ class BaseLLMProvider(ABC):
     """Abstract base class for LLM providers."""
     
     @abstractmethod
+    def validate_config(self) -> bool:
+        """Validate provider configuration.
+        
+        Returns:
+            True if configuration is valid, False otherwise
+        """
+        pass
+    
+    @abstractmethod
     def create_llm(
         self,
         model_name: str,

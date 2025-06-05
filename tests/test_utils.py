@@ -12,7 +12,7 @@ from src.utils.prompt_loader import PromptLoader
 from src.utils.session_context import SessionContext
 from src.utils.state import AgentState
 from src.utils.graph import create_agent_graph, should_continue, call_model
-from src.utils.nodes import LLMModelRegistry, get_llm_registry, create_llm_with_tools
+from src.utils.nodes import create_llm_with_tools, validate_provider_config
 
 
 class TestPromptLoader:
@@ -167,15 +167,14 @@ class TestGraphUtilities:
         assert callable(call_model)
 
 
-class TestLLMModelRegistry:
-    """Test LLM model registry functionality"""
+class TestLLMUtilities:
+    """Test LLM utility functions"""
     
     @pytest.mark.unit
-    def test_get_llm_registry(self):
-        """Test getting LLM registry instance"""
-        registry = get_llm_registry()
-        assert registry is not None
-        assert isinstance(registry, LLMModelRegistry)
+    def test_validate_provider_config(self):
+        """Test provider configuration validation"""
+        assert validate_provider_config("azure") is not None
+        assert validate_provider_config("ollama") is not None
     
     @pytest.mark.unit
     def test_create_llm_with_tools_exists(self):

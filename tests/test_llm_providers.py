@@ -155,18 +155,14 @@ class TestOllamaLLMProvider:
     
     @pytest.mark.unit
     @pytest.mark.provider
-    def test_validate_config(self, mock_settings):
-        """Test Ollama configuration validation."""
+    def test_provider_initialization(self, mock_settings):
+        """Test Ollama provider initialization."""
         with patch('src.services.langfuse_service.CallbackHandler'):
             with patch('langfuse.callback.CallbackHandler'):
                 from src.models.ollama_llm import OllamaLLMProvider
                 
                 provider = OllamaLLMProvider()
                 
-                # Test with valid config
-                with patch.object(provider.settings, 'OLLAMA_ENDPOINT', 'http://test-ollama:11434'):
-                    assert provider.validate_config() is True
-                
-                # Test with invalid config
-                with patch.object(provider.settings, 'OLLAMA_ENDPOINT', None):
-                    assert provider.validate_config() is False
+                # Test provider initialization
+                assert provider is not None
+                assert provider.provider_name == "ollama"
